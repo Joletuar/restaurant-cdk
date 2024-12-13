@@ -8,20 +8,28 @@
     "build": "tsc",
     "watch": "tsc -w",
     "test": "jest",
-    "cdk": "cdk"
+    "cdk": "cdk",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@types/aws-lambda": "8.10.145",
     "@types/jest": "^29.5.14",
     "@types/node": "22.7.9",
+    "aws-cdk": "2.166.0",
     "jest": "^29.7.0",
     "ts-jest": "^29.2.5",
-    "aws-cdk": "2.166.0",
     "ts-node": "^10.9.2",
+    "tsconfig-paths": "4.2.0",
     "typescript": "~5.6.3"
   },
   "dependencies": {
-    "aws-cdk-lib": "2.166.0",
+    "@aws-sdk/client-dynamodb": "3.693.0",
+    "@aws-sdk/client-sqs": "3.693.0",
+    "@aws-sdk/util-dynamodb": "3.693.0",
+    "ajv": "8.17.1",
+    "aws-cdk-lib": "2.169.0",
     "constructs": "^10.0.0",
+    "http-status-codes": "2.3.0",
     "source-map-support": "^0.5.21"
   }
 }
