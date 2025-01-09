@@ -13,9 +13,13 @@ import { DynamoDbService } from '@lib/services/DynamoDbService';
 import { Ingredient } from '@lib/types/Store';
 import { NotFoundError } from '@lib/errors/NotFoundError';
 import { zodValidator } from '@lib/helpers/zodValidator';
+import { envs } from '@lib/config/envs';
+import { PurchaseIngredientsEvent } from '../purchases/types/PurchaseEvents';
 
 const processor: SQSProcessor<GetIngredientsEvent> = async (message) => {
-  if (message.ingredients.length === 0)
+  const { orderId, ingredients } = message;
+
+  if (ingredients.length === 0)
     throw new ServiceError(
       'Ingredients not given',
       'Ingredients must be at least 1',
@@ -25,7 +29,7 @@ const processor: SQSProcessor<GetIngredientsEvent> = async (message) => {
   // Obtenemos los ingredientes y lo restamos el stock
   const dynamoService = new DynamoDbService();
   let hasStock = true;
-  const ingredientsToRequest = [];
+  const ingredientsToRequest: PurchaseIngredientsEvent[] = [];
 
   // TODO:
   // hacer que este proceso sea indempotente, haciendo que la actualizacion del stock
@@ -35,7 +39,7 @@ const processor: SQSProcessor<GetIngredientsEvent> = async (message) => {
       key: {
         id: ingredient.id,
       },
-      tableName: process.env.STORE_QUEUE_URL,
+      tableName: envs.tables.ingredientsTableName,
     });
 
     if (!result)
@@ -43,14 +47,21 @@ const processor: SQSProcessor<GetIngredientsEvent> = async (message) => {
 
     // Si no tenemos stock suficientes debemos comprar
     if (result.stock < ingredient.quantity) {
-      ingredientsToRequest.push(ingredient);
+      ingredientsToRequest.push({
+        orderId,
+        ingredientId: result.id,
+        ingredientName: result.name,
+        requiredQuantity: Math.abs(
+          Math.ceil(result.stock - ingredient.quantity)
+        ),
+      });
       hasStock = false;
     } else {
       await dynamoService.updateData<Ingredient>({
         key: {
           id: ingredient.id,
         },
-        tableName: process.env.STORE_QUEUE_URL,
+        tableName: envs.tables.ingredientsTableName,
         updateExpression: 'SET stock = stock - :value',
         expressionAttributeValues: {
           ':value': `${ingredient.quantity}`,
@@ -65,8 +76,8 @@ const processor: SQSProcessor<GetIngredientsEvent> = async (message) => {
       // send sqs event to buy missing ingredients
       // TODO:
       /**
-       * 1. crear el handler para manejar la compra de los ingredientes
-       * 2. emitir el evento de que la compra se ha hecho con exito
+       * 1. crear el handler para manejar la compra de los ingredientes ✅
+       * 2. emitir el evento de que la compra se ha hecho con exito ✅
        * 3. crear el handler para actualizar el stock con los nuevos ingredientes
        * 4. emitir el evento de que el stock fue actualizado
        * 4. actualizar el stock con quitanto los ingredientes con que requiere la receta.
