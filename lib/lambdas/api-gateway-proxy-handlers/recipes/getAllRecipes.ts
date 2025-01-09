@@ -1,5 +1,6 @@
 import { DynamoDBClient, ScanCommand } from '@aws-sdk/client-dynamodb';
 import { unmarshall } from '@aws-sdk/util-dynamodb';
+import { envs } from '@lib/config/envs';
 
 import { Recipe } from '@lib/types/Recipe';
 import { createApiGatewayProxyLambdaHandler } from '@lib/utils/cloud/createApiGatewayProxyLambdaHandler';
@@ -9,7 +10,7 @@ const dynamodbClient = new DynamoDBClient({});
 
 const processor = async () => {
   const command = new ScanCommand({
-    TableName: process.env.RECIPES_TABLE_NAME,
+    TableName: envs.tables.recipesTableName,
     Limit: 10, // TODO: sacar esto del query param (implement criteria pattern)
   });
 

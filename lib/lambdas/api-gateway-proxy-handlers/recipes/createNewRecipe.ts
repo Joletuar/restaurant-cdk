@@ -10,6 +10,7 @@ import { Recipe } from '@lib/types/Recipe';
 import { createApiGatewayProxyLambdaHandler } from '@lib/utils/cloud/createApiGatewayProxyLambdaHandler';
 import { HttResponse } from '@lib/utils/http/HttpResponse';
 import { zodValidator } from '@lib/helpers/zodValidator';
+import { envs } from '@lib/config/envs';
 
 const dynamodbClient = new DynamoDBClient({});
 
@@ -24,12 +25,14 @@ const processor = async (event: APIGatewayProxyEventV2) => {
     id: crypto.randomUUID(),
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
+    name: parsedEventData.name,
+    ingredients: parsedEventData.ingredients,
   };
 
   const item = marshall(newRecipe);
 
   const putCommand = new PutItemCommand({
-    TableName: process.env.RECIPES_TABLE_NAME,
+    TableName: envs.tables.recipesTableName,
     Item: item,
   });
 

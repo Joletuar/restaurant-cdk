@@ -10,12 +10,13 @@ import {
 } from '@lib/utils/cloud/createSQSHandler';
 
 import { DynamoDbService } from '@lib/services/DynamoDbService';
+import { envs } from '@lib/config/envs';
 
 const processor: SQSProcessor<UpdateOrderStatusEvent> = async (message) => {
   const service = new DynamoDbService();
 
   await service.updateData({
-    tableName: process.env.ORDERS_TABLE_NAME,
+    tableName: envs.tables.ordersTableName,
     key: {
       id: message.orderId,
     },

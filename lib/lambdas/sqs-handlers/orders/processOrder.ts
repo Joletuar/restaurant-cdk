@@ -13,6 +13,7 @@ import { zodValidator } from '@lib/helpers/zodValidator';
 import { Recipe } from '@lib/types/Recipe';
 import { DynamoDbService } from '@lib/services/DynamoDbService';
 import { NotFoundError } from '@lib/errors/NotFoundError';
+import { envs } from '@lib/config/envs';
 
 const sqsClient = new SQSClient({});
 const dynamodbService = new DynamoDbService();
@@ -21,7 +22,7 @@ const processor: SQSProcessor<CreatedOrderEvent> = async (message) => {
   // 1. Actualizar el estado de la orden a "preparando"
   // TODO: create a service for sqs
   const orderCommand = new SendMessageCommand({
-    QueueUrl: process.env.ORDER_EVENTS_QUEUE_URL,
+    QueueUrl: envs.queues.updateOrderStatusQueueUrl,
     MessageBody: JSON.stringify({
       orderId: message.id,
       status: message.status,
@@ -33,7 +34,7 @@ const processor: SQSProcessor<CreatedOrderEvent> = async (message) => {
 
   // 2. Obtener los ingredientes de la receta al inventario
   const recipe = await dynamodbService.queryDataByPk<Recipe>({
-    tableName: process.env.RECIPES_TABLE_NAME,
+    tableName: envs.tables.recipesTableName,
     key: {
       id: message.recipeId,
     },
@@ -43,13 +44,16 @@ const processor: SQSProcessor<CreatedOrderEvent> = async (message) => {
     throw new NotFoundError(`Recipe <${message.recipeId}> not found`);
   }
 
-  const storeSendCommand = new SendMessageCommand({
-    QueueUrl: process.env.STORE_QUEUE_URL,
-    MessageBody: JSON.stringify(recipe.ingredients),
+  const ingredientsSendCommand = new SendMessageCommand({
+    QueueUrl: envs.queues.getIngredientsQueueUrl,
+    MessageBody: JSON.stringify({
+      orderId: message.id,
+      ingredients: recipe.ingredients,
+    }),
     MessageGroupId: recipe.id,
   });
 
-  await sqsClient.send(storeSendCommand);
+  await sqsClient.send(ingredientsSendCommand);
 };
 
 const recordParser: SQSRecordParser<CreatedOrderEvent> = (record) =>
