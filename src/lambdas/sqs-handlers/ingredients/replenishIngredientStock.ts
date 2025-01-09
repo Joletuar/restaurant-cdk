@@ -7,7 +7,7 @@ import {
 } from '@src/utils/cloud/createSQSHandler';
 import {
   replenishStockIngredientSchema,
-  ReplenishIngredientStock,
+  ReplenishIngredientStockEvent,
 } from './types/IngredientEvents';
 import { zodValidator } from '@src/helpers/zodValidator';
 import { DynamoDbService } from '@src/services/DynamoDbService';
@@ -16,7 +16,9 @@ import { envs } from '@src/config/envs';
 const dynamoDbService = new DynamoDbService();
 const sqsClient = new SQSClient({});
 
-const processor: SQSProcessor<ReplenishIngredientStock> = async (message) => {
+const processor: SQSProcessor<ReplenishIngredientStockEvent> = async (
+  message
+) => {
   const { orderId, ingredientId, purchasedQuantity, requiredQuantity } =
     message;
 
@@ -42,7 +44,7 @@ const processor: SQSProcessor<ReplenishIngredientStock> = async (message) => {
   await sqsClient.send(command);
 };
 
-const recordParser: SQSRecordParser<ReplenishIngredientStock> = (event) =>
+const recordParser: SQSRecordParser<ReplenishIngredientStockEvent> = (event) =>
   zodValidator(event.body, replenishStockIngredientSchema);
 
 export const handler = createSQSHandler(
