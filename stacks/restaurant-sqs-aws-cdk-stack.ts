@@ -20,11 +20,25 @@ export class RestaurantSQSAwsCdkStack extends cdk.Stack {
     // tables
 
     const recipesTable = new dynamodb.Table(this, 'RecipesTable', {
+      tableName: 'RecipesTable',
       partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
     });
 
     const ordersTable = new dynamodb.Table(this, 'OrdersTable', {
+      tableName: 'OrdersTable',
+      partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+    });
+
+    const ingredientsTable = new dynamodb.Table(this, 'IngredientsTable', {
+      tableName: 'IngredientsTable',
+      partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+    });
+
+    const purchaseTable = new dynamodb.Table(this, 'PurchaseTable', {
+      tableName: 'PurchaseTable',
       partitionKey: { name: 'id', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
     });
@@ -42,25 +56,88 @@ export class RestaurantSQSAwsCdkStack extends cdk.Stack {
 
     const processOrdersQueue = new sqs.Queue(this, 'ProcessOrdersQueue', {
       ...defaultFifoQueueProps,
+      queueName: 'ProcessOrdersQueue',
       deadLetterQueue: {
         maxReceiveCount: 3,
         queue: new sqs.Queue(this, 'ProcessOrdersDeadLetterQueue', {
+          queueName: 'ProcessOrdersDeadLetterQueue',
           fifo: true,
           retentionPeriod: cdk.Duration.days(7),
         }),
       },
     });
 
-    const storeQueue = new sqs.Queue(this, 'StoreQueue', {
+    const getIngredientsQueue = new sqs.Queue(this, 'GetIngredientsQueue', {
       ...defaultFifoQueueProps,
+      queueName: 'GetIngredientsQueue',
       deadLetterQueue: {
         maxReceiveCount: 3,
-        queue: new sqs.Queue(this, 'StoreDeadLetterQueue', {
+        queue: new sqs.Queue(this, 'GetIngredientsQueueDeadLetterQueue', {
+          queueName: 'GetIngredientsQueueDeadLetterQueue',
           fifo: true,
           retentionPeriod: cdk.Duration.days(7),
         }),
       },
     });
+
+    const updateOrderStatusQueue = new sqs.Queue(
+      this,
+      'UpdateOrderStatusQueue',
+      {
+        ...defaultFifoQueueProps,
+        queueName: 'UpdateOrderStatusQueue',
+        deadLetterQueue: {
+          maxReceiveCount: 3,
+          queue: new sqs.Queue(this, 'UpdateOrderStatusQueueDeadLetterQueue', {
+            queueName: 'UpdateOrderStatusQueueDeadLetterQueue',
+            fifo: true,
+            retentionPeriod: cdk.Duration.days(7),
+          }),
+        },
+      }
+    );
+
+    const purchaseIngredientsQueue = new sqs.Queue(
+      this,
+      'PurchaseIngredientsQueue',
+      {
+        ...defaultFifoQueueProps,
+        queueName: 'PurchaseIngredientsQueue',
+        deadLetterQueue: {
+          maxReceiveCount: 3,
+          queue: new sqs.Queue(
+            this,
+            'PurchaseIngredientsQueueDeadLetterQueue',
+            {
+              queueName: 'PurchaseIngredientsQueueDeadLetterQueue',
+              fifo: true,
+              retentionPeriod: cdk.Duration.days(7),
+            }
+          ),
+        },
+      }
+    );
+
+    const replenishIngredientStockQueue = new sqs.Queue(
+      this,
+      'ReplenishIngredientStockQueue',
+      {
+        ...defaultFifoQueueProps,
+        queueName: 'ReplenishIngredientStockQueue',
+        deadLetterQueue: {
+          maxReceiveCount: 3,
+          queue: new sqs.Queue(
+            this,
+            'ReplenishIngredientStockQueueDeadLetterQueue',
+            {
+              queueName: 'ReplenishIngredientStockQueueDeadLetterQueue',
+              fifo: true,
+              retentionPeriod: cdk.Duration.days(7),
+            }
+          ),
+        },
+      }
+    );
 
     // api gw
 
@@ -81,8 +158,14 @@ export class RestaurantSQSAwsCdkStack extends cdk.Stack {
       environment: {
         RECIPES_TABLE_NAME: recipesTable.tableName,
         ORDERS_TABLE_NAME: ordersTable.tableName,
+        INGREDIENTS_TABLE_NAME: ingredientsTable.tableName,
+        PURCHASES_TABLE_NAME: purchaseTable.tableName,
         PROCESS_ORDERS_QUEUE_URL: processOrdersQueue.queueUrl,
-        STORE_QUEUE_URL: storeQueue.queueUrl,
+        GET_INGREDIENTS_QUEUE_URL: getIngredientsQueue.queueUrl,
+        UPDATE_ORDERS_STATUS_QUEUE_URL: updateOrderStatusQueue.queueUrl,
+        PURCHASE_INGREDIENTS_QUEUE_URL: purchaseIngredientsQueue.queueUrl,
+        REPLENISH_INGREDIENTS_STOCK_QUEUE_URL:
+          replenishIngredientStockQueue.queueUrl,
       } satisfies Enviroment,
     };
 
