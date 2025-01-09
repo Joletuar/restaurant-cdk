@@ -6,11 +6,11 @@ import {
   createRecipeApiProxyEventSchema,
   type CreateRecipeApiProxyEvent,
 } from './types/RecipeEvents';
-import { Recipe } from '@lib/types/Recipe';
-import { createApiGatewayProxyLambdaHandler } from '@lib/utils/cloud/createApiGatewayProxyLambdaHandler';
-import { HttResponse } from '@lib/utils/http/HttpResponse';
-import { zodValidator } from '@lib/helpers/zodValidator';
-import { envs } from '@lib/config/envs';
+import { Recipe } from '@src/types/Recipe';
+import { createApiGatewayProxyLambdaHandler } from '@src/utils/cloud/createApiGatewayProxyLambdaHandler';
+import { HttResponse } from '@src/utils/http/HttpResponse';
+import { zodValidator } from '@src/helpers/zodValidator';
+import { envs } from '@src/config/envs';
 
 const dynamodbClient = new DynamoDBClient({});
 

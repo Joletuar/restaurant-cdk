@@ -1,10 +1,10 @@
 import { DynamoDBClient, ScanCommand } from '@aws-sdk/client-dynamodb';
 import { unmarshall } from '@aws-sdk/util-dynamodb';
-import { envs } from '@lib/config/envs';
+import { envs } from '@src/config/envs';
 
-import { Recipe } from '@lib/types/Recipe';
-import { createApiGatewayProxyLambdaHandler } from '@lib/utils/cloud/createApiGatewayProxyLambdaHandler';
-import { HttResponse } from '@lib/utils/http/HttpResponse';
+import { Recipe } from '@src/types/Recipe';
+import { createApiGatewayProxyLambdaHandler } from '@src/utils/cloud/createApiGatewayProxyLambdaHandler';
+import { HttResponse } from '@src/utils/http/HttpResponse';
 
 const dynamodbClient = new DynamoDBClient({});
 

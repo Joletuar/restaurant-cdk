@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { OrderStatus } from '@lib/types/Order';
+import { OrderStatus } from '@src/types/Order';
 
 export const createdOrderEventSchema = z.object({
   id: z.string().uuid(),

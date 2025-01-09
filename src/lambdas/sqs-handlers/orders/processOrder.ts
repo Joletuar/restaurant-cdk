@@ -6,14 +6,14 @@ import {
   createSQSHandler,
   SQSProcessor,
   SQSRecordParser,
-} from '@lib/utils/cloud/createSQSHandler';
+} from '@src/utils/cloud/createSQSHandler';
 import { SQSClient, SendMessageCommand } from '@aws-sdk/client-sqs';
 
-import { zodValidator } from '@lib/helpers/zodValidator';
-import { Recipe } from '@lib/types/Recipe';
-import { DynamoDbService } from '@lib/services/DynamoDbService';
-import { NotFoundError } from '@lib/errors/NotFoundError';
-import { envs } from '@lib/config/envs';
+import { zodValidator } from '@src/helpers/zodValidator';
+import { Recipe } from '@src/types/Recipe';
+import { DynamoDbService } from '@src/services/DynamoDbService';
+import { NotFoundError } from '@src/errors/NotFoundError';
+import { envs } from '@src/config/envs';
 
 const sqsClient = new SQSClient({});
 const dynamodbService = new DynamoDbService();

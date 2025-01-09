@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { ZodError } from '@lib/errors/ZodError';
+import { ZodError } from '@src/errors/ZodError';
 
 export const zodValidator = <T>(data: string | undefined, schema: z.Schema) => {
   let parsedData: unknown;

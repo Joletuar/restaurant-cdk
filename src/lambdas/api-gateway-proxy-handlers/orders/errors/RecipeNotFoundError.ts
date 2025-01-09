@@ -1,4 +1,4 @@
-import { NotFoundError } from '@lib/errors/NotFoundError';
+import { NotFoundError } from '@src/errors/NotFoundError';
 
 export class RecipeNotFoundError extends NotFoundError {
   constructor(param: string) {

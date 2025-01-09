@@ -4,13 +4,13 @@ import {
   createSQSHandler,
   SQSProcessor,
   SQSRecordParser,
-} from '@lib/utils/cloud/createSQSHandler';
+} from '@src/utils/cloud/createSQSHandler';
 import {
   PurchaseIngredientsEvent,
   purchaseIngredientsEventSchema,
 } from './types/PurchaseEvents';
-import { zodValidator } from '@lib/helpers/zodValidator';
-import { envs } from '@lib/config/envs';
+import { zodValidator } from '@src/helpers/zodValidator';
+import { envs } from '@src/config/envs';
 
 const getRandomNumber = () => Math.round(10 * Math.random());
 

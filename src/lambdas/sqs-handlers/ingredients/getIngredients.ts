@@ -2,18 +2,18 @@ import {
   createSQSHandler,
   SQSProcessor,
   SQSRecordParser,
-} from '@lib/utils/cloud/createSQSHandler';
+} from '@src/utils/cloud/createSQSHandler';
 
 import {
   GetIngredientsEvent,
   getIngredientsEventSchema,
 } from './types/IngredientEvents';
-import { ServiceError } from '@lib/errors/ServiceError';
-import { DynamoDbService } from '@lib/services/DynamoDbService';
-import { Ingredient } from '@lib/types/Store';
-import { NotFoundError } from '@lib/errors/NotFoundError';
-import { zodValidator } from '@lib/helpers/zodValidator';
-import { envs } from '@lib/config/envs';
+import { ServiceError } from '@src/errors/ServiceError';
+import { DynamoDbService } from '@src/services/DynamoDbService';
+import { Ingredient } from '@src/types/Store';
+import { NotFoundError } from '@src/errors/NotFoundError';
+import { zodValidator } from '@src/helpers/zodValidator';
+import { envs } from '@src/config/envs';
 import { PurchaseIngredientsEvent } from '../purchases/types/PurchaseEvents';
 
 const processor: SQSProcessor<GetIngredientsEvent> = async (message) => {

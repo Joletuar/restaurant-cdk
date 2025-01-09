@@ -1,9 +1,9 @@
 import type { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 import { StatusCodes } from 'http-status-codes';
 
-import { AppError } from '@lib/errors/AppError';
-import { InfraestructureError } from '@lib/errors/InfraestructureError';
-import { ServiceError } from '@lib/errors/ServiceError';
+import { AppError } from '@src/errors/AppError';
+import { InfraestructureError } from '@src/errors/InfraestructureError';
+import { ServiceError } from '@src/errors/ServiceError';
 
 export const apiGatewayProxyErrorHandler = (
   error: unknown

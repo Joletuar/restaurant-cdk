@@ -1,6 +1,6 @@
 import { Context } from 'aws-lambda';
 
-import { AppError } from '@lib/errors/AppError';
+import { AppError } from '@src/errors/AppError';
 
 export const errorLogger = (error: unknown, context: Context) => {
   const format = {

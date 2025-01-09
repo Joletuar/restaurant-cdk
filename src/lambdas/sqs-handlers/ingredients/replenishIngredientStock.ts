@@ -4,14 +4,14 @@ import {
   createSQSHandler,
   SQSProcessor,
   SQSRecordParser,
-} from '@lib/utils/cloud/createSQSHandler';
+} from '@src/utils/cloud/createSQSHandler';
 import {
   replenishStockIngredientSchema,
   ReplenishIngredientStock,
 } from './types/IngredientEvents';
-import { zodValidator } from '@lib/helpers/zodValidator';
-import { DynamoDbService } from '@lib/services/DynamoDbService';
-import { envs } from '@lib/config/envs';
+import { zodValidator } from '@src/helpers/zodValidator';
+import { DynamoDbService } from '@src/services/DynamoDbService';
+import { envs } from '@src/config/envs';
 
 const dynamoDbService = new DynamoDbService();
 const sqsClient = new SQSClient({});

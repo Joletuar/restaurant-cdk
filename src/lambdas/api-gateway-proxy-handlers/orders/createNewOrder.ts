@@ -6,14 +6,14 @@ import {
   createNewOrderApiProxyEventSchema,
   type CreateNewOrderApiProxyEvent,
 } from './types/OrderEvents';
-import { Recipe } from '@lib/types/Recipe';
+import { Recipe } from '@src/types/Recipe';
 import { RecipeNotFoundError } from './errors/RecipeNotFoundError';
-import { Order, OrderStatus } from '@lib/types/Order';
-import { createApiGatewayProxyLambdaHandler } from '@lib/utils/cloud/createApiGatewayProxyLambdaHandler';
-import { HttResponse } from '@lib/utils/http/HttpResponse';
-import { zodValidator } from '@lib/helpers/zodValidator';
-import { DynamoDbService } from '@lib/services/DynamoDbService';
-import { envs } from '@lib/config/envs';
+import { Order, OrderStatus } from '@src/types/Order';
+import { createApiGatewayProxyLambdaHandler } from '@src/utils/cloud/createApiGatewayProxyLambdaHandler';
+import { HttResponse } from '@src/utils/http/HttpResponse';
+import { zodValidator } from '@src/helpers/zodValidator';
+import { DynamoDbService } from '@src/services/DynamoDbService';
+import { envs } from '@src/config/envs';
 
 const sqsClient = new sqs.SQSClient({});
 const dynamoDbService = new DynamoDbService();

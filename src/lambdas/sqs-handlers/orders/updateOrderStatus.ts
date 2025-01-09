@@ -1,4 +1,4 @@
-import { zodValidator } from '@lib/helpers/zodValidator';
+import { zodValidator } from '@src/helpers/zodValidator';
 import {
   type UpdateOrderStatusEvent,
   updateOrderStatusSchema,
@@ -7,10 +7,10 @@ import {
   createSQSHandler,
   SQSProcessor,
   SQSRecordParser,
-} from '@lib/utils/cloud/createSQSHandler';
+} from '@src/utils/cloud/createSQSHandler';
 
-import { DynamoDbService } from '@lib/services/DynamoDbService';
-import { envs } from '@lib/config/envs';
+import { DynamoDbService } from '@src/services/DynamoDbService';
+import { envs } from '@src/config/envs';
 
 const processor: SQSProcessor<UpdateOrderStatusEvent> = async (message) => {
   const service = new DynamoDbService();
