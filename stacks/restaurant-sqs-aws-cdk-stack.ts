@@ -9,7 +9,7 @@ import * as awsLambda from 'aws-cdk-lib/aws-lambda';
 import * as sources from 'aws-cdk-lib/aws-lambda-event-sources';
 
 import * as path from 'path';
-import { Enviroment } from '../../global';
+import { Enviroment } from '../global';
 
 interface Props extends cdk.StackProps {}
 
