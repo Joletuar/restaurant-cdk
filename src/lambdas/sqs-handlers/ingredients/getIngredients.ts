@@ -10,7 +10,7 @@ import {
 } from './types/IngredientEvents';
 import { ServiceError } from '@src/errors/ServiceError';
 import { DynamoDbService } from '@src/services/DynamoDbService';
-import { Ingredient } from '@src/types/Store';
+import { Ingredient } from '@src/types/Ingredient';
 import { NotFoundError } from '@src/errors/NotFoundError';
 import { zodValidator } from '@src/helpers/zodValidator';
 import { envs } from '@src/config/envs';
