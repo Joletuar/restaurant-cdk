@@ -37,22 +37,22 @@ const processor: SQSProcessor<GetIngredientsEvent> = async (message) => {
   const ingredientsToRequest: PurchaseIngredientsEvent[] = [];
 
   for (const ingredient of message.ingredients) {
-    const result = await dynamoService.queryDataByPk<Ingredient>({
+    const ingredientDb = await dynamoService.queryDataByPk<Ingredient>({
       key: {
         id: ingredient.id,
       },
       tableName: envs.tables.ingredientsTableName,
     });
 
-    if (!result)
+    if (!ingredientDb)
       throw new NotFoundError(`Ingredient <${ingredient}> not found`);
 
     // Si no tenemos stock suficientes debemos comprar
-    if (result.stock < ingredient.quantity) {
+    if (ingredient.quantity > ingredientDb.stock) {
       ingredientsToRequest.push({
         orderId,
-        ingredientId: result.id,
-        ingredientName: result.name,
+        ingredientId: ingredientDb.id,
+        ingredientName: ingredientDb.name,
         requiredQuantity: Math.ceil(ingredient.quantity),
       });
       hasStock = false;
