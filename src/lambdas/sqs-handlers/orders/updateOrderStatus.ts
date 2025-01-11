@@ -12,9 +12,9 @@ import {
 import { DynamoDbService } from '@src/services/DynamoDbService';
 import { envs } from '@src/config/envs';
 
-const processor: SQSProcessor<UpdateOrderStatusEvent> = async (message) => {
-  const service = new DynamoDbService();
+const service = new DynamoDbService();
 
+const processor: SQSProcessor<UpdateOrderStatusEvent> = async (message) => {
   await service.updateData({
     tableName: envs.tables.ordersTableName,
     key: {

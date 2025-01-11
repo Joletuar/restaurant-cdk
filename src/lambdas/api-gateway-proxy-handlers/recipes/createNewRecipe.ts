@@ -1,6 +1,4 @@
 import { APIGatewayProxyEventV2 } from 'aws-lambda';
-import { marshall } from '@aws-sdk/util-dynamodb';
-import { DynamoDBClient, PutItemCommand } from '@aws-sdk/client-dynamodb';
 
 import {
   createRecipeApiProxyEventSchema,
@@ -11,8 +9,9 @@ import { createApiGatewayProxyLambdaHandler } from '@src/utils/cloud/createApiGa
 import { HttResponse } from '@src/utils/http/HttpResponse';
 import { zodValidator } from '@src/helpers/zodValidator';
 import { envs } from '@src/config/envs';
+import { DynamoDbService } from '@src/services/DynamoDbService';
 
-const dynamodbClient = new DynamoDBClient({});
+const dynamodbService = new DynamoDbService();
 
 const processor = async (event: APIGatewayProxyEventV2) => {
   const parsedEventData = zodValidator<CreateRecipeApiProxyEvent>(
@@ -29,14 +28,10 @@ const processor = async (event: APIGatewayProxyEventV2) => {
     ingredients: parsedEventData.ingredients,
   };
 
-  const item = marshall(newRecipe);
-
-  const putCommand = new PutItemCommand({
-    TableName: envs.tables.recipesTableName,
-    Item: item,
+  await dynamodbService.putData<Recipe>({
+    tableName: envs.tables.recipesTableName,
+    data: newRecipe,
   });
-
-  await dynamodbClient.send(putCommand);
 
   return HttResponse.created();
 };

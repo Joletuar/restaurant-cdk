@@ -1,5 +1,4 @@
 import type { APIGatewayProxyEventV2 } from 'aws-lambda';
-import * as sqs from '@aws-sdk/client-sqs';
 import * as crypto from 'node:crypto';
 
 import {
@@ -14,8 +13,9 @@ import { HttResponse } from '@src/utils/http/HttpResponse';
 import { zodValidator } from '@src/helpers/zodValidator';
 import { DynamoDbService } from '@src/services/DynamoDbService';
 import { envs } from '@src/config/envs';
+import { SqsService } from '@src/services/SqsService';
 
-const sqsClient = new sqs.SQSClient({});
+const sqsService = new SqsService();
 const dynamoDbService = new DynamoDbService();
 
 const processor = async (event: APIGatewayProxyEventV2) => {
@@ -49,13 +49,11 @@ const processor = async (event: APIGatewayProxyEventV2) => {
   });
 
   // Emitimos el evento de la orden creada en la cola
-  const sqsSendCommand = new sqs.SendMessageCommand({
-    QueueUrl: envs.queues.processOrdersQueueUrl,
-    MessageBody: JSON.stringify(order),
-    MessageGroupId: order.id, // parametro obligatorio para las fifo sqs, para agrupar los mensajes
+  await sqsService.sendMessage<Order>({
+    data: order,
+    queueUrl: envs.queues.processOrdersQueueUrl,
+    messageGroupId: order.id,
   });
-
-  await sqsClient.send(sqsSendCommand);
 
   return HttResponse.created();
 };

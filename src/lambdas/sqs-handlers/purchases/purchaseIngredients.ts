@@ -1,5 +1,3 @@
-import { SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs';
-
 import {
   createSQSHandler,
   SQSProcessor,
@@ -11,10 +9,12 @@ import {
 } from './types/PurchaseEvents';
 import { zodValidator } from '@src/helpers/zodValidator';
 import { envs } from '@src/config/envs';
+import { SqsService } from '@src/services/SqsService';
+import { ReplenishIngredientStockEvent } from '../ingredients/types/IngredientEvents';
 
 const getRandomNumber = () => Math.round(10 * Math.random());
 
-const sqsClient = new SQSClient({});
+const sqsService = new SqsService();
 
 const processor: SQSProcessor<PurchaseIngredientsEvent> = async (message) => {
   const { orderId, ingredientId, ingredientName, requiredQuantity } = message;
@@ -25,18 +25,17 @@ const processor: SQSProcessor<PurchaseIngredientsEvent> = async (message) => {
     purchasedQuantity = purchasedQuantity + getRandomNumber();
   }
 
-  const command = new SendMessageCommand({
-    MessageBody: JSON.stringify({
+  await sqsService.sendMessage<ReplenishIngredientStockEvent>({
+    data: {
       orderId,
       ingredientId,
       ingredientName,
       purchasedQuantity,
-    }),
-    QueueUrl: envs.queues.replenishIngredientsStockQueueUrl,
-    MessageGroupId: orderId,
+      requiredQuantity,
+    },
+    queueUrl: envs.queues.replenishIngredientsStockQueueUrl,
+    messageGroupId: orderId,
   });
-
-  await sqsClient.send(command);
 };
 
 const recordParser: SQSRecordParser<PurchaseIngredientsEvent> = (event) =>

@@ -15,6 +15,12 @@ import { NotFoundError } from '@src/errors/NotFoundError';
 import { zodValidator } from '@src/helpers/zodValidator';
 import { envs } from '@src/config/envs';
 import { PurchaseIngredientsEvent } from '../purchases/types/PurchaseEvents';
+import { OrderStatus } from '@src/types/Order';
+import { SqsService } from '@src/services/SqsService';
+import { UpdateOrderStatusEvent } from '../orders/types/OrderEvents';
+
+const sqsService = new SqsService();
+const dynamoService = new DynamoDbService();
 
 const processor: SQSProcessor<GetIngredientsEvent> = async (message) => {
   const { orderId, ingredients } = message;
@@ -27,13 +33,9 @@ const processor: SQSProcessor<GetIngredientsEvent> = async (message) => {
     );
 
   // Obtenemos los ingredientes y lo restamos el stock
-  const dynamoService = new DynamoDbService();
   let hasStock = true;
   const ingredientsToRequest: PurchaseIngredientsEvent[] = [];
 
-  // TODO:
-  // hacer que este proceso sea indempotente, haciendo que la actualizacion del stock
-  // solo se haga cuando se tiene todo los ingredientes (OJO)
   for (const ingredient of message.ingredients) {
     const result = await dynamoService.queryDataByPk<Ingredient>({
       key: {
@@ -51,9 +53,7 @@ const processor: SQSProcessor<GetIngredientsEvent> = async (message) => {
         orderId,
         ingredientId: result.id,
         ingredientName: result.name,
-        requiredQuantity: Math.abs(
-          Math.ceil(result.stock - ingredient.quantity)
-        ),
+        requiredQuantity: Math.ceil(ingredient.quantity),
       });
       hasStock = false;
     } else {
@@ -72,28 +72,23 @@ const processor: SQSProcessor<GetIngredientsEvent> = async (message) => {
   }
 
   if (!hasStock) {
-    ingredientsToRequest.forEach((i) => {
+    const promises = ingredientsToRequest.map((ingredient) => {
       // send sqs event to buy missing ingredients
-      // TODO:
-      /**
-       * 1. crear el handler para manejar la compra de los ingredientes ✅
-       * 2. emitir el evento de que la compra se ha hecho con exito ✅
-       * 3. crear el handler para actualizar el stock con los nuevos ingredientes
-       * 4. emitir el evento de que el stock fue actualizado
-       * 4. actualizar el stock con quitanto los ingredientes con que requiere la receta.
-       * 5. emitir evento de actualizacion de estado de la receta
-       * 6. actualizar el estado de la recta a terminado
-       * 7. Opcional: emitir evento de que una receta se ha procesado para que se refleje en tiempo real en el front
-       */
+      return sqsService.sendMessage<PurchaseIngredientsEvent>({
+        data: ingredient,
+        queueUrl: envs.queues.purchaseIngredientsQueueUrl,
+        messageGroupId: ingredient.orderId,
+      });
     });
+
+    await Promise.all(promises);
   } else {
     // send sqs event that orders is ready
-    // TODO:
-    /**
-     * 1. emitir evento de actualizacion de estado de la receta
-     * 2. actualizar el estado de la recta a terminado
-     * 3. Opcional: emitir evento de que una receta se ha procesado para que se refleje en tiempo real en el front
-     */
+    await sqsService.sendMessage<UpdateOrderStatusEvent>({
+      data: { orderId, status: OrderStatus.COMPLETE },
+      queueUrl: envs.queues.updateOrderStatusQueueUrl,
+      messageGroupId: orderId,
+    });
   }
 };
 

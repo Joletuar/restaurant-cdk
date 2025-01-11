@@ -1,5 +1,3 @@
-import { SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs';
-
 import {
   createSQSHandler,
   SQSProcessor,
@@ -12,15 +10,17 @@ import {
 import { zodValidator } from '@src/helpers/zodValidator';
 import { DynamoDbService } from '@src/services/DynamoDbService';
 import { envs } from '@src/config/envs';
+import { NotFoundError } from '@src/errors/NotFoundError';
+import { SqsService } from '@src/services/SqsService';
+import { Order } from '@src/types/Order';
 
 const dynamoDbService = new DynamoDbService();
-const sqsClient = new SQSClient({});
+const sqsService = new SqsService();
 
 const processor: SQSProcessor<ReplenishIngredientStockEvent> = async (
   message
 ) => {
-  const { orderId, ingredientId, purchasedQuantity, requiredQuantity } =
-    message;
+  const { orderId, ingredientId, purchasedQuantity } = message;
 
   await dynamoDbService.updateData({
     key: { id: ingredientId },
@@ -31,17 +31,20 @@ const processor: SQSProcessor<ReplenishIngredientStockEvent> = async (
     },
   });
 
-  const command = new SendMessageCommand({
-    QueueUrl: envs.queues.getIngredientsQueueUrl,
-    MessageBody: JSON.stringify({
-      orderId,
-      ingredientId,
-      quantity: requiredQuantity,
-    }),
-    MessageGroupId: orderId,
+  const order = await dynamoDbService.queryDataByPk<Order>({
+    key: {
+      id: orderId,
+    },
+    tableName: envs.tables.ordersTableName,
   });
 
-  await sqsClient.send(command);
+  if (!order) throw new NotFoundError(`Order <${orderId}> not found`);
+
+  await sqsService.sendMessage<Order>({
+    data: order,
+    queueUrl: envs.queues.getIngredientsQueueUrl,
+    messageGroupId: orderId,
+  });
 };
 
 const recordParser: SQSRecordParser<ReplenishIngredientStockEvent> = (event) =>
