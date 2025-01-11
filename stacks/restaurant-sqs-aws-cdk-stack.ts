@@ -56,11 +56,11 @@ export class RestaurantSQSAwsCdkStack extends cdk.Stack {
 
     const processOrdersQueue = new sqs.Queue(this, 'ProcessOrdersQueue', {
       ...defaultFifoQueueProps,
-      queueName: 'ProcessOrdersQueue',
+      queueName: 'ProcessOrdersQueue.fifo',
       deadLetterQueue: {
         maxReceiveCount: 3,
         queue: new sqs.Queue(this, 'ProcessOrdersDeadLetterQueue', {
-          queueName: 'ProcessOrdersDeadLetterQueue',
+          queueName: 'ProcessOrdersDeadLetterQueue.fifo',
           fifo: true,
           retentionPeriod: cdk.Duration.days(7),
         }),
@@ -69,11 +69,11 @@ export class RestaurantSQSAwsCdkStack extends cdk.Stack {
 
     const getIngredientsQueue = new sqs.Queue(this, 'GetIngredientsQueue', {
       ...defaultFifoQueueProps,
-      queueName: 'GetIngredientsQueue',
+      queueName: 'GetIngredientsQueue.fifo',
       deadLetterQueue: {
         maxReceiveCount: 3,
         queue: new sqs.Queue(this, 'GetIngredientsQueueDeadLetterQueue', {
-          queueName: 'GetIngredientsQueueDeadLetterQueue',
+          queueName: 'GetIngredientsQueueDeadLetterQueue.fifo',
           fifo: true,
           retentionPeriod: cdk.Duration.days(7),
         }),
@@ -85,11 +85,11 @@ export class RestaurantSQSAwsCdkStack extends cdk.Stack {
       'UpdateOrderStatusQueue',
       {
         ...defaultFifoQueueProps,
-        queueName: 'UpdateOrderStatusQueue',
+        queueName: 'UpdateOrderStatusQueue.fifo',
         deadLetterQueue: {
           maxReceiveCount: 3,
           queue: new sqs.Queue(this, 'UpdateOrderStatusQueueDeadLetterQueue', {
-            queueName: 'UpdateOrderStatusQueueDeadLetterQueue',
+            queueName: 'UpdateOrderStatusQueueDeadLetterQueue.fifo',
             fifo: true,
             retentionPeriod: cdk.Duration.days(7),
           }),
@@ -102,14 +102,14 @@ export class RestaurantSQSAwsCdkStack extends cdk.Stack {
       'PurchaseIngredientsQueue',
       {
         ...defaultFifoQueueProps,
-        queueName: 'PurchaseIngredientsQueue',
+        queueName: 'PurchaseIngredientsQueue.fifo',
         deadLetterQueue: {
           maxReceiveCount: 3,
           queue: new sqs.Queue(
             this,
             'PurchaseIngredientsQueueDeadLetterQueue',
             {
-              queueName: 'PurchaseIngredientsQueueDeadLetterQueue',
+              queueName: 'PurchaseIngredientsQueueDeadLetterQueue.fifo',
               fifo: true,
               retentionPeriod: cdk.Duration.days(7),
             }
@@ -123,14 +123,14 @@ export class RestaurantSQSAwsCdkStack extends cdk.Stack {
       'ReplenishIngredientStockQueue',
       {
         ...defaultFifoQueueProps,
-        queueName: 'ReplenishIngredientStockQueue',
+        queueName: 'ReplenishIngredientStockQueue.fifo',
         deadLetterQueue: {
           maxReceiveCount: 3,
           queue: new sqs.Queue(
             this,
             'ReplenishIngredientStockQueueDeadLetterQueue',
             {
-              queueName: 'ReplenishIngredientStockQueueDeadLetterQueue',
+              queueName: 'ReplenishIngredientStockQueueDeadLetterQueue.fifo',
               fifo: true,
               retentionPeriod: cdk.Duration.days(7),
             }
@@ -178,6 +178,7 @@ export class RestaurantSQSAwsCdkStack extends cdk.Stack {
         entry: path.join(
           __dirname,
           '..',
+          'src',
           'lambdas',
           'api-gateway-proxy-handlers',
           'orders',
@@ -195,10 +196,11 @@ export class RestaurantSQSAwsCdkStack extends cdk.Stack {
         entry: path.join(
           __dirname,
           '..',
+          'src',
           'lambdas',
           'sqs-handlers',
           'orders',
-          'processNewOrder.ts'
+          'processOrder.ts'
         ),
       }
     );
@@ -212,6 +214,7 @@ export class RestaurantSQSAwsCdkStack extends cdk.Stack {
         entry: path.join(
           __dirname,
           '..',
+          'src',
           'lambdas',
           'api-gateway-proxy-handlers',
           'recipes',
@@ -229,6 +232,7 @@ export class RestaurantSQSAwsCdkStack extends cdk.Stack {
         entry: path.join(
           __dirname,
           '..',
+          'src',
           'lambdas',
           'api-gateway-proxy-handlers',
           'recipes',
@@ -246,9 +250,10 @@ export class RestaurantSQSAwsCdkStack extends cdk.Stack {
         entry: path.join(
           __dirname,
           '..',
+          'src',
           'lambdas',
           'sqs-handlers',
-          'recipes',
+          'ingredients',
           'getIngredients.ts'
         ),
       }
@@ -263,6 +268,7 @@ export class RestaurantSQSAwsCdkStack extends cdk.Stack {
         entry: path.join(
           __dirname,
           '..',
+          'src',
           'lambdas',
           'sqs-handlers',
           'orders',
@@ -280,10 +286,11 @@ export class RestaurantSQSAwsCdkStack extends cdk.Stack {
         entry: path.join(
           __dirname,
           '..',
+          'src',
           'lambdas',
           'sqs-handlers',
-          'ingredients',
-          'purchaseIngredients.ts'
+          'purchases',
+          'purchaseIngredient.ts'
         ),
       }
     );
@@ -297,6 +304,7 @@ export class RestaurantSQSAwsCdkStack extends cdk.Stack {
         entry: path.join(
           __dirname,
           '..',
+          'src',
           'lambdas',
           'sqs-handlers',
           'ingredients',
@@ -407,6 +415,8 @@ export class RestaurantSQSAwsCdkStack extends cdk.Stack {
     getIngredientsQueue.grantConsumeMessages(getIngredientsLambda);
     getIngredientsQueue.grantSendMessages(replenishIngredientStockLambda);
     getIngredientsQueue.grantSendMessages(processNewOrderLambda);
+
+    // TODO: separar en stacks para cada entidad
 
     new cdk.CfnOutput(this, 'ApiGatewayUrl', { value: apiGateway.url! });
   }
