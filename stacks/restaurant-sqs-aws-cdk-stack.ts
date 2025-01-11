@@ -174,6 +174,7 @@ export class RestaurantSQSAwsCdkStack extends cdk.Stack {
       'CreateNewOrderLambda',
       {
         ...nodeJsDefaultProps,
+        functionName: 'CreateNewOrderLambda',
         entry: path.join(
           __dirname,
           '..',
@@ -190,6 +191,7 @@ export class RestaurantSQSAwsCdkStack extends cdk.Stack {
       'ProcessNewOrderLambda',
       {
         ...nodeJsDefaultProps,
+        functionName: 'ProcessNewOrderLambda',
         entry: path.join(
           __dirname,
           '..',
@@ -206,6 +208,7 @@ export class RestaurantSQSAwsCdkStack extends cdk.Stack {
       'CreateNewRecipeLambda',
       {
         ...nodeJsDefaultProps,
+        functionName: 'CreateNewRecipeLambda',
         entry: path.join(
           __dirname,
           '..',
@@ -222,6 +225,7 @@ export class RestaurantSQSAwsCdkStack extends cdk.Stack {
       'GetAllRecipesLambda',
       {
         ...nodeJsDefaultProps,
+        functionName: 'GetAllRecipesLambda',
         entry: path.join(
           __dirname,
           '..',
@@ -233,12 +237,112 @@ export class RestaurantSQSAwsCdkStack extends cdk.Stack {
       }
     );
 
+    const getIngredientsLambda = new lambdaNodeJs.NodejsFunction(
+      this,
+      'GetIngredientsLambda',
+      {
+        ...nodeJsDefaultProps,
+        functionName: 'GetIngredientsLambda',
+        entry: path.join(
+          __dirname,
+          '..',
+          'lambdas',
+          'sqs-handlers',
+          'recipes',
+          'getIngredients.ts'
+        ),
+      }
+    );
+
+    const updateOrderStatusLambda = new lambdaNodeJs.NodejsFunction(
+      this,
+      'UpdateOrderStatusLambda',
+      {
+        ...nodeJsDefaultProps,
+        functionName: 'UpdateOrderStatusLambda',
+        entry: path.join(
+          __dirname,
+          '..',
+          'lambdas',
+          'sqs-handlers',
+          'orders',
+          'updateOrderStatus.ts'
+        ),
+      }
+    );
+
+    const purchaseIngredientsLambda = new lambdaNodeJs.NodejsFunction(
+      this,
+      'PurchaseIngredientsLambda',
+      {
+        ...nodeJsDefaultProps,
+        functionName: 'PurchaseIngredientsLambda',
+        entry: path.join(
+          __dirname,
+          '..',
+          'lambdas',
+          'sqs-handlers',
+          'ingredients',
+          'purchaseIngredients.ts'
+        ),
+      }
+    );
+
+    const replenishIngredientStockLambda = new lambdaNodeJs.NodejsFunction(
+      this,
+      'ReplenishIngredientStockLambda',
+      {
+        ...nodeJsDefaultProps,
+        functionName: 'ReplenishIngredientStockLambda',
+        entry: path.join(
+          __dirname,
+          '..',
+          'lambdas',
+          'sqs-handlers',
+          'ingredients',
+          'replenishIngredientStock.ts'
+        ),
+      }
+    );
+
     // integrations
 
     processNewOrderLambda.addEventSource(
       new sources.SqsEventSource(processOrdersQueue, {
         batchSize: 5, // total de mensajes procesados por una lambda
         maxConcurrency: 3, // total de lambdas concurrentes
+        reportBatchItemFailures: true,
+      })
+    );
+
+    updateOrderStatusLambda.addEventSource(
+      new sources.SqsEventSource(updateOrderStatusQueue, {
+        batchSize: 5,
+        maxConcurrency: 3,
+        reportBatchItemFailures: true,
+      })
+    );
+
+    purchaseIngredientsLambda.addEventSource(
+      new sources.SqsEventSource(purchaseIngredientsQueue, {
+        batchSize: 5,
+        maxConcurrency: 3,
+        reportBatchItemFailures: true,
+      })
+    );
+
+    replenishIngredientStockLambda.addEventSource(
+      new sources.SqsEventSource(replenishIngredientStockQueue, {
+        batchSize: 5,
+        maxConcurrency: 3,
+        reportBatchItemFailures: true,
+      })
+    );
+
+    getIngredientsLambda.addEventSource(
+      new sources.SqsEventSource(getIngredientsQueue, {
+        batchSize: 5,
+        maxConcurrency: 3,
         reportBatchItemFailures: true,
       })
     );
@@ -275,11 +379,34 @@ export class RestaurantSQSAwsCdkStack extends cdk.Stack {
     recipesTable.grantReadWriteData(createNewOrderLambda);
     recipesTable.grantReadWriteData(getAllRecipesLambda);
     recipesTable.grantReadWriteData(createNewRecipeLambda);
+    recipesTable.grantReadWriteData(processNewOrderLambda);
 
     ordersTable.grantReadWriteData(createNewOrderLambda);
+    ordersTable.grantReadWriteData(updateOrderStatusLambda);
+    ordersTable.grantReadWriteData(replenishIngredientStockLambda);
+
+    ingredientsTable.grantReadWriteData(purchaseIngredientsLambda);
+    ingredientsTable.grantReadWriteData(replenishIngredientStockLambda);
+    ingredientsTable.grantReadWriteData(getIngredientsLambda);
 
     processOrdersQueue.grantSendMessages(createNewOrderLambda);
     processOrdersQueue.grantConsumeMessages(processNewOrderLambda);
+
+    updateOrderStatusQueue.grantConsumeMessages(updateOrderStatusLambda);
+    updateOrderStatusQueue.grantSendMessages(getIngredientsLambda);
+    updateOrderStatusQueue.grantSendMessages(processNewOrderLambda);
+
+    purchaseIngredientsQueue.grantConsumeMessages(purchaseIngredientsLambda);
+    purchaseIngredientsQueue.grantSendMessages(getIngredientsLambda);
+
+    replenishIngredientStockQueue.grantConsumeMessages(
+      replenishIngredientStockLambda
+    );
+    replenishIngredientStockQueue.grantSendMessages(purchaseIngredientsLambda);
+
+    getIngredientsQueue.grantConsumeMessages(getIngredientsLambda);
+    getIngredientsQueue.grantSendMessages(replenishIngredientStockLambda);
+    getIngredientsQueue.grantSendMessages(processNewOrderLambda);
 
     new cdk.CfnOutput(this, 'ApiGatewayUrl', { value: apiGateway.url! });
   }
