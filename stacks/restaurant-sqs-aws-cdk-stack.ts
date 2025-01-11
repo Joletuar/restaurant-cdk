@@ -309,40 +309,40 @@ export class RestaurantSQSAwsCdkStack extends cdk.Stack {
 
     processNewOrderLambda.addEventSource(
       new sources.SqsEventSource(processOrdersQueue, {
-        batchSize: 5, // total de mensajes procesados por una lambda
-        maxConcurrency: 3, // total de lambdas concurrentes
+        batchSize: 1, // total de mensajes procesados por una lambda
+        maxConcurrency: 2, // total de lambdas concurrentes
         reportBatchItemFailures: true,
       })
     );
 
     updateOrderStatusLambda.addEventSource(
       new sources.SqsEventSource(updateOrderStatusQueue, {
-        batchSize: 5,
-        maxConcurrency: 3,
+        batchSize: 1,
+        maxConcurrency: 2,
         reportBatchItemFailures: true,
       })
     );
 
     purchaseIngredientsLambda.addEventSource(
       new sources.SqsEventSource(purchaseIngredientsQueue, {
-        batchSize: 5,
-        maxConcurrency: 3,
+        batchSize: 1,
+        maxConcurrency: 2,
         reportBatchItemFailures: true,
       })
     );
 
     replenishIngredientStockLambda.addEventSource(
       new sources.SqsEventSource(replenishIngredientStockQueue, {
-        batchSize: 5,
-        maxConcurrency: 3,
+        batchSize: 1,
+        maxConcurrency: 2,
         reportBatchItemFailures: true,
       })
     );
 
     getIngredientsLambda.addEventSource(
       new sources.SqsEventSource(getIngredientsQueue, {
-        batchSize: 5,
-        maxConcurrency: 3,
+        batchSize: 1,
+        maxConcurrency: 2,
         reportBatchItemFailures: true,
       })
     );
