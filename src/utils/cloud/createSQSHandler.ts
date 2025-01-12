@@ -94,6 +94,8 @@ const performSequentialProcess = async <TData>({
     try {
       await processor(parsedBody, context);
     } catch (error) {
+      console.error(JSON.stringify(error, null, 2));
+
       sQsBatchResponse.batchItemFailures.push({
         itemIdentifier: record.messageId,
       });

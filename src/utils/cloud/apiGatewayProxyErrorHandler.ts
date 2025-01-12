@@ -8,6 +8,8 @@ import { ServiceError } from '@src/errors/ServiceError';
 export const apiGatewayProxyErrorHandler = (
   error: unknown
 ): APIGatewayProxyStructuredResultV2 => {
+  console.error(JSON.stringify(error, null, 2));
+
   const response: APIGatewayProxyStructuredResultV2 = {
     statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
     headers: {

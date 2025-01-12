@@ -8,13 +8,13 @@ import { HttResponse } from '../http/HttpResponse';
 import { errorLogger } from '../errorLogger';
 import { apiGatewayProxyErrorHandler } from './apiGatewayProxyErrorHandler';
 
+export type ApiProxyProcessor = (
+  event: APIGatewayProxyEventV2,
+  context: Context
+) => Promise<HttResponse> | HttResponse;
+
 export const createApiGatewayProxyLambdaHandler =
-  (params: {
-    processor: (
-      event: APIGatewayProxyEventV2,
-      context: Context
-    ) => Promise<HttResponse> | HttResponse;
-  }): APIGatewayProxyHandlerV2 =>
+  (params: { processor: ApiProxyProcessor }): APIGatewayProxyHandlerV2 =>
   async (event, context) => {
     const { processor } = params;
 
