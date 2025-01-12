@@ -23,6 +23,8 @@ const sqsService = new SqsService();
 const dynamoService = new DynamoDbService();
 
 const processor: SQSProcessor<GetIngredientsEvent> = async (message) => {
+  console.log(JSON.stringify(message, null, 2));
+
   const { orderId, ingredients } = message;
 
   if (ingredients.length === 0)
@@ -47,6 +49,17 @@ const processor: SQSProcessor<GetIngredientsEvent> = async (message) => {
     if (!ingredientDb)
       throw new NotFoundError(`Ingredient <${ingredient}> not found`);
 
+    console.log(
+      JSON.stringify(
+        {
+          ingredientDb,
+          ingredient,
+        },
+        null,
+        2
+      )
+    );
+
     // Si no tenemos stock suficientes debemos comprar
     if (ingredient.quantity > ingredientDb.stock) {
       ingredientsToRequest.push({
@@ -62,14 +75,25 @@ const processor: SQSProcessor<GetIngredientsEvent> = async (message) => {
           id: ingredient.id,
         },
         tableName: envs.tables.ingredientsTableName,
-        updateExpression: 'SET stock = stock - :value',
+        updateExpression: 'SET #stock = #stock - :value',
+        expressionAttributeNames: { '#stock': 'stock' },
         expressionAttributeValues: {
-          ':value': `${ingredient.quantity}`,
+          ':value': ingredient.quantity,
         },
-        returnValues: 'NONE',
       });
     }
   }
+
+  console.log(
+    JSON.stringify(
+      {
+        ingredientsToRequest,
+        hasStock,
+      },
+      null,
+      2
+    )
+  );
 
   if (!hasStock) {
     const promises = ingredientsToRequest.map((ingredient) => {

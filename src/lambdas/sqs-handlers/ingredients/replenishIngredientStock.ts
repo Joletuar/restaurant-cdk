@@ -20,14 +20,19 @@ const sqsService = new SqsService();
 const processor: SQSProcessor<ReplenishIngredientStockEvent> = async (
   message
 ) => {
+  console.log(JSON.stringify(message, null, 2));
+
   const { orderId, ingredientId, purchasedQuantity } = message;
 
   await dynamoDbService.updateData({
     key: { id: ingredientId },
     tableName: envs.tables.ingredientsTableName,
-    updateExpression: 'SET stock = stock + :purchasedQuantity',
+    updateExpression: 'SET #stock = #stock + :purchasedQuantity',
+    expressionAttributeNames: {
+      '#stock': 'stock',
+    },
     expressionAttributeValues: {
-      ':purchasedQuantity': purchasedQuantity.toString(),
+      ':purchasedQuantity': purchasedQuantity,
     },
   });
 
@@ -40,9 +45,11 @@ const processor: SQSProcessor<ReplenishIngredientStockEvent> = async (
 
   if (!order) throw new NotFoundError(`Order <${orderId}> not found`);
 
+  console.log(JSON.stringify(order, null, 2));
+
   await sqsService.sendMessage<Order>({
     data: order,
-    queueUrl: envs.queues.getIngredientsQueueUrl,
+    queueUrl: envs.queues.processOrdersQueueUrl,
     messageGroupId: orderId,
   });
 };
