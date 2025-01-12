@@ -34,6 +34,7 @@ export class SqsService {
         MessageGroupId: messageGroupId,
         MessageAttributes: messageAttributes,
         MessageBody: JSON.stringify(data),
+        MessageDeduplicationId: crypto.randomUUID(),
       })
     );
   }

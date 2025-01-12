@@ -4,6 +4,7 @@ import {
   GetItemCommand,
   PutItemCommand,
   ReturnValue,
+  ScanCommand,
   UpdateItemCommand,
 } from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
@@ -40,21 +41,24 @@ export class DynamoDbService {
     tableName: string;
     key: Record<string, string>;
     updateExpression: string;
-    expressionAttributeValues: Record<string, string>;
+    expressionAttributeNames: Record<string, string>;
+    expressionAttributeValues: Record<string, unknown>;
     returnValues?: ReturnValue;
   }) {
     const {
       tableName,
       key,
       updateExpression,
+      expressionAttributeNames,
       expressionAttributeValues,
-      returnValues = 'ALL_NEW',
+      returnValues = 'NONE',
     } = params;
 
     const command = new UpdateItemCommand({
       TableName: tableName,
       Key: marshall(key),
       UpdateExpression: updateExpression,
+      ExpressionAttributeNames: expressionAttributeNames,
       ExpressionAttributeValues: marshall(expressionAttributeValues),
       ReturnValues: returnValues,
     });
@@ -73,9 +77,9 @@ export class DynamoDbService {
   async putData<T>(params: {
     tableName: string;
     data: T;
-    returnValues?: ReturnValue;
+    returnValues?: 'ALL_OLD' | 'NONE';
   }) {
-    const { tableName, data, returnValues = 'ALL_NEW' } = params;
+    const { tableName, data, returnValues = 'NONE' } = params;
 
     const command = new PutItemCommand({
       TableName: tableName,
@@ -92,5 +96,33 @@ export class DynamoDbService {
       default:
         return unmarshall(result.Attributes!) as T;
     }
+  }
+
+  async scanData<T>(params: {
+    tableName: string;
+    limit: number;
+    lastKeyValue?: Record<string, unknown>;
+  }): Promise<{ data: T[]; lastKeyValue?: Record<string, unknown> }> {
+    const { tableName, limit, lastKeyValue } = params;
+
+    const command = new ScanCommand({
+      TableName: tableName,
+      Limit: limit,
+      ExclusiveStartKey: lastKeyValue ? marshall(lastKeyValue) : undefined,
+    });
+
+    const result = await this.dynamoDbClient.send(command);
+
+    if (result.Items === undefined)
+      return {
+        data: [],
+      };
+
+    return {
+      data: result.Items.map((item) => unmarshall(item)) as T[],
+      lastKeyValue: result.LastEvaluatedKey
+        ? unmarshall(result.LastEvaluatedKey)
+        : undefined,
+    };
   }
 }
