@@ -47,7 +47,7 @@ export class RestaurantSQSAwsCdkStack extends cdk.Stack {
 
     const defaultFifoQueueProps: sqs.QueueProps = {
       fifo: true,
-      contentBasedDeduplication: true,
+      contentBasedDeduplication: false,
       deduplicationScope: sqs.DeduplicationScope.MESSAGE_GROUP,
       retentionPeriod: cdk.Duration.days(1),
       visibilityTimeout: cdk.Duration.minutes(3),
@@ -313,6 +313,78 @@ export class RestaurantSQSAwsCdkStack extends cdk.Stack {
       }
     );
 
+    const createIngredientLambda = new lambdaNodeJs.NodejsFunction(
+      this,
+      'CreateIngredientLambda',
+      {
+        ...nodeJsDefaultProps,
+        functionName: 'CreateIngredientLambda',
+        entry: path.join(
+          __dirname,
+          '..',
+          'src',
+          'lambdas',
+          'api-gateway-proxy-handlers',
+          'ingredients',
+          'createIngredient.ts'
+        ),
+      }
+    );
+
+    const getAllIngredientsLambda = new lambdaNodeJs.NodejsFunction(
+      this,
+      'GetAllIngredientsLambda',
+      {
+        ...nodeJsDefaultProps,
+        functionName: 'GetAllIngredientsLambda',
+        entry: path.join(
+          __dirname,
+          '..',
+          'src',
+          'lambdas',
+          'api-gateway-proxy-handlers',
+          'ingredients',
+          'getAllIngredients.ts'
+        ),
+      }
+    );
+
+    const getAllOrdersLambda = new lambdaNodeJs.NodejsFunction(
+      this,
+      'GetAllOrdersLambda',
+      {
+        ...nodeJsDefaultProps,
+        functionName: 'GetAllOrdersLambda',
+        entry: path.join(
+          __dirname,
+          '..',
+          'src',
+          'lambdas',
+          'api-gateway-proxy-handlers',
+          'orders',
+          'getAllOrders.ts'
+        ),
+      }
+    );
+
+    const getAllPurchasesLambda = new lambdaNodeJs.NodejsFunction(
+      this,
+      'GetAllPurchasesLambda',
+      {
+        ...nodeJsDefaultProps,
+        functionName: 'GetAllPurchasesLambda',
+        entry: path.join(
+          __dirname,
+          '..',
+          'src',
+          'lambdas',
+          'api-gateway-proxy-handlers',
+          'purchases',
+          'getAllPurchases.ts'
+        ),
+      }
+    );
+
     // integrations
 
     processNewOrderLambda.addEventSource(
@@ -365,6 +437,15 @@ export class RestaurantSQSAwsCdkStack extends cdk.Stack {
     });
 
     apiGateway.addRoutes({
+      path: '/orders',
+      methods: [apiGatewayv2.HttpMethod.GET],
+      integration: new apiGatewayv2Integration.HttpLambdaIntegration(
+        'GetAllOrdersLambdaIntegration',
+        getAllOrdersLambda
+      ),
+    });
+
+    apiGateway.addRoutes({
       path: '/kitchen/recipes',
       methods: [apiGatewayv2.HttpMethod.POST],
       integration: new apiGatewayv2Integration.HttpLambdaIntegration(
@@ -382,6 +463,33 @@ export class RestaurantSQSAwsCdkStack extends cdk.Stack {
       ),
     });
 
+    apiGateway.addRoutes({
+      path: '/kitchen/ingredients',
+      methods: [apiGatewayv2.HttpMethod.POST],
+      integration: new apiGatewayv2Integration.HttpLambdaIntegration(
+        'CreateIngredientLambdaIntegration',
+        createIngredientLambda
+      ),
+    });
+
+    apiGateway.addRoutes({
+      path: '/kitchen/ingredients',
+      methods: [apiGatewayv2.HttpMethod.GET],
+      integration: new apiGatewayv2Integration.HttpLambdaIntegration(
+        'GetAllIngredientsLambdaIntegration',
+        getAllIngredientsLambda
+      ),
+    });
+
+    apiGateway.addRoutes({
+      path: '/purchases',
+      methods: [apiGatewayv2.HttpMethod.GET],
+      integration: new apiGatewayv2Integration.HttpLambdaIntegration(
+        'GetAllPurchasesLambdaIntegration',
+        getAllPurchasesLambda
+      ),
+    });
+
     // policies
 
     recipesTable.grantReadWriteData(createNewOrderLambda);
@@ -392,13 +500,20 @@ export class RestaurantSQSAwsCdkStack extends cdk.Stack {
     ordersTable.grantReadWriteData(createNewOrderLambda);
     ordersTable.grantReadWriteData(updateOrderStatusLambda);
     ordersTable.grantReadWriteData(replenishIngredientStockLambda);
+    ordersTable.grantReadWriteData(getAllOrdersLambda);
 
     ingredientsTable.grantReadWriteData(purchaseIngredientsLambda);
     ingredientsTable.grantReadWriteData(replenishIngredientStockLambda);
     ingredientsTable.grantReadWriteData(getIngredientsLambda);
+    ingredientsTable.grantReadWriteData(getAllIngredientsLambda);
+    ingredientsTable.grantReadWriteData(createIngredientLambda);
+
+    purchaseTable.grantReadWriteData(getAllPurchasesLambda);
+    purchaseTable.grantReadWriteData(purchaseIngredientsLambda);
 
     processOrdersQueue.grantSendMessages(createNewOrderLambda);
     processOrdersQueue.grantConsumeMessages(processNewOrderLambda);
+    processOrdersQueue.grantSendMessages(replenishIngredientStockLambda);
 
     updateOrderStatusQueue.grantConsumeMessages(updateOrderStatusLambda);
     updateOrderStatusQueue.grantSendMessages(getIngredientsLambda);
@@ -413,7 +528,6 @@ export class RestaurantSQSAwsCdkStack extends cdk.Stack {
     replenishIngredientStockQueue.grantSendMessages(purchaseIngredientsLambda);
 
     getIngredientsQueue.grantConsumeMessages(getIngredientsLambda);
-    getIngredientsQueue.grantSendMessages(replenishIngredientStockLambda);
     getIngredientsQueue.grantSendMessages(processNewOrderLambda);
 
     // TODO: separar en stacks para cada entidad
