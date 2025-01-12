@@ -16,16 +16,19 @@ import { NotFoundError } from '@src/errors/NotFoundError';
 import { envs } from '@src/config/envs';
 import { SqsService } from '@src/services/SqsService';
 import { GetIngredientsEvent } from '../ingredients/types/IngredientEvents';
+import { OrderStatus } from '@src/types/Order';
 
 const sqsService = new SqsService();
 const dynamodbService = new DynamoDbService();
 
 const processor: SQSProcessor<CreatedOrderEvent> = async (message) => {
+  console.log(JSON.stringify(message, null, 2));
+
   // 1. Actualizar el estado de la orden a "preparando"
   await sqsService.sendMessage<UpdateOrderStatusEvent>({
     data: {
       orderId: message.id,
-      status: message.status,
+      status: OrderStatus.PREPARING,
     },
     queueUrl: envs.queues.updateOrderStatusQueueUrl,
     messageGroupId: message.id,

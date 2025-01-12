@@ -15,12 +15,17 @@ import { envs } from '@src/config/envs';
 const service = new DynamoDbService();
 
 const processor: SQSProcessor<UpdateOrderStatusEvent> = async (message) => {
+  console.log(JSON.stringify(message, null, 2));
+
   await service.updateData({
     tableName: envs.tables.ordersTableName,
     key: {
       id: message.orderId,
     },
-    updateExpression: 'SET status = :status',
+    updateExpression: 'SET #status = :status',
+    expressionAttributeNames: {
+      '#status': 'status',
+    },
     expressionAttributeValues: { ':status': message.status },
   });
 

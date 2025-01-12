@@ -11,18 +11,43 @@ import { zodValidator } from '@src/helpers/zodValidator';
 import { envs } from '@src/config/envs';
 import { SqsService } from '@src/services/SqsService';
 import { ReplenishIngredientStockEvent } from '../ingredients/types/IngredientEvents';
+import { DynamoDbService } from '@src/services/DynamoDbService';
+import { Purchase } from '@src/types/Purchases';
+import * as crypto from 'crypto';
 
 const getRandomNumber = () => Math.round(10 * Math.random());
 
 const sqsService = new SqsService();
+const dynamoService = new DynamoDbService();
 
 const processor: SQSProcessor<PurchaseIngredientsEvent> = async (message) => {
+  console.log(JSON.stringify(message, null, 2));
+
   const { orderId, ingredientId, ingredientName, requiredQuantity } = message;
 
-  let purchasedQuantity = 0;
+  let currentQuantity = 0;
 
-  while (requiredQuantity < purchasedQuantity) {
-    purchasedQuantity = purchasedQuantity + getRandomNumber();
+  while (requiredQuantity > currentQuantity) {
+    const purchasedQuantity = getRandomNumber();
+
+    console.log(purchasedQuantity);
+
+    currentQuantity = purchasedQuantity + getRandomNumber();
+
+    console.log(currentQuantity);
+
+    const purchase: Purchase = {
+      id: crypto.randomUUID(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      ingredientId,
+      purchasedQuantity,
+    };
+
+    await dynamoService.putData<Purchase>({
+      tableName: envs.tables.purchasesTableName,
+      data: purchase,
+    });
   }
 
   await sqsService.sendMessage<ReplenishIngredientStockEvent>({
@@ -30,7 +55,7 @@ const processor: SQSProcessor<PurchaseIngredientsEvent> = async (message) => {
       orderId,
       ingredientId,
       ingredientName,
-      purchasedQuantity,
+      purchasedQuantity: currentQuantity,
       requiredQuantity,
     },
     queueUrl: envs.queues.replenishIngredientsStockQueueUrl,
