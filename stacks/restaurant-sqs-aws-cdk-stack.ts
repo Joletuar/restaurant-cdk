@@ -50,7 +50,7 @@ export class RestaurantSQSAwsCdkStack extends cdk.Stack {
       contentBasedDeduplication: false,
       deduplicationScope: sqs.DeduplicationScope.MESSAGE_GROUP,
       retentionPeriod: cdk.Duration.days(1),
-      visibilityTimeout: cdk.Duration.minutes(3),
+      visibilityTimeout: cdk.Duration.seconds(30),
       fifoThroughputLimit: sqs.FifoThroughputLimit.PER_MESSAGE_GROUP_ID,
     };
 
