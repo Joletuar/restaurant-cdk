@@ -24,6 +24,8 @@ const processor: ApiProxyProcessor = async (event) => {
   const ingredient: Ingredient = {
     ...parsedData,
     id: crypto.randomUUID(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   };
 
   await dynamoService.putData<Ingredient>({

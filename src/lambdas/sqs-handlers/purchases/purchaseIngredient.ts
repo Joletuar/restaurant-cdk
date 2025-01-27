@@ -21,8 +21,6 @@ const sqsService = new SqsService();
 const dynamoService = new DynamoDbService();
 
 const processor: SQSProcessor<PurchaseIngredientsEvent> = async (message) => {
-  console.log(JSON.stringify(message, null, 2));
-
   const { orderId, ingredientId, ingredientName, requiredQuantity } = message;
 
   let currentQuantity = 0;
@@ -30,11 +28,7 @@ const processor: SQSProcessor<PurchaseIngredientsEvent> = async (message) => {
   while (requiredQuantity > currentQuantity) {
     const purchasedQuantity = getRandomNumber();
 
-    console.log(purchasedQuantity);
-
     currentQuantity = purchasedQuantity + getRandomNumber();
-
-    console.log(currentQuantity);
 
     const purchase: Purchase = {
       id: crypto.randomUUID(),

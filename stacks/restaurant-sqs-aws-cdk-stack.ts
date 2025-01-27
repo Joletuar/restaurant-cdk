@@ -530,7 +530,7 @@ export class RestaurantSQSAwsCdkStack extends cdk.Stack {
     getIngredientsQueue.grantConsumeMessages(getIngredientsLambda);
     getIngredientsQueue.grantSendMessages(processNewOrderLambda);
 
-    // TODO: separar en stacks para cada entidad
+    // TODO: Add builder patter to create entities
 
     new cdk.CfnOutput(this, 'ApiGatewayUrl', { value: apiGateway.url! });
   }
